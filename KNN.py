@@ -2,7 +2,7 @@
 # This Python 3 environment comes with many helpful analytics libraries installed
 # It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python
 # For example, here's several helpful packages to load in 
-
+# try push christine
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
@@ -69,7 +69,7 @@ from sklearn import model_selection
 #provides data structures to quickly analyze data
 #Read the train dataset
 
-dataset = pandas.read_csv("E:\Coding\GithubSpace\ECSE608_Project\dataset/train.csv")
+dataset = pandas.read_csv("dataset/train.csv")
 
 # Size of the dataframe
 print(dataset.shape)

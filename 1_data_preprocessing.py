@@ -22,10 +22,11 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 ###################################################################################
 #############################   Load data    ######################################
-df_train = pd.read_csv('C:/Users/Lione/Desktop/Machine Learning Project/dataset/train.csv')
+df_train = pd.read_csv('dataset/train.csv')
 
 ## Show all of the features
 print df_train.columns
+print "original column lengh", len(df_train.columns)
 
 #descriptive statistics summary
 df_train['SalePrice'].describe()
@@ -188,6 +189,10 @@ plt.scatter(df_train[df_train['TotalBsmtSF']>0]['TotalBsmtSF'], df_train[df_trai
 
 #convert categorical variable into dummy
 df_train = pd.get_dummies(df_train)
+
+
+print "new column length is ", len(df_train.columns)
+#df_train.to_csv('good.csv')
 
 
 

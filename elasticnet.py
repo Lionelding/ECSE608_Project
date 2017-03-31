@@ -13,7 +13,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 import warnings
 warnings.filterwarnings('ignore')
 
-train = pd.read_csv('dataset/train.csv')
+train = pd.read_csv('dataset/good.csv')
 test = pd.read_csv('dataset/test.csv')
 
 #print train.head()

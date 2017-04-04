@@ -42,7 +42,13 @@ import sklearn.metrics as metrics
 
 ###################################################################################
 
+## Swtich to plot the graghs of detailed optimiation for different methods
+Algorithms_compare=1
+ELN_detail=0
+KNN_detail=0
+RF_detail=0
 
+## If we want PCA or not
 PCA_allowed=0
 
 #Read the train dataset
@@ -79,7 +85,10 @@ scoring = 'r2'
 
 # evaluate each model in turn
 train_val_results = []
-test_results= []
+test_results_r2= []
+test_results_mse=[]
+test_results_meanae=[]
+test_results_medianae=[]
 
 names = []
 for name, model in models:
@@ -93,219 +102,248 @@ for name, model in models:
     ## Use X_test, Y_test to see if overfitting
     clf = model.fit(X_train, Y_train)
     prediction=clf.predict(X_test)
-    test_result=metrics.r2_score(Y_test, prediction)
-    #test_result=clf.score(X_test, Y_test) 
-    test_results.append(test_result)
-    print("%s R2 score: %0.2f" % (name, test_result))
     
-# Plot and Save
-fig_results = plt.figure()
-fig_results.suptitle('Algorithm Comparison on Training Data (K-fold=5)')
-ax = fig_results.add_subplot(111)
-plt.ylabel('R2 score')
-plt.boxplot(train_val_results)
-ax.set_xticklabels(names)
-fig_results.savefig('img/train_results.png')
+    ## Four evaluation metrics
+    r2=metrics.r2_score(Y_test, prediction)
+    mse=metrics.mean_squared_error(Y_test, prediction)
+    meanae=metrics.mean_absolute_error(Y_test, prediction)
+    medianae=metrics.median_absolute_error(Y_test, prediction)
+    
+    
+    test_results_r2.append(r2)
+    test_results_mse.append(mse)
+    test_results_meanae.append(meanae)
+    test_results_medianae.append(medianae)
+    
+    
+    if(Algorithms_compare):
+        print ("%s r2_score: %0.3f" % (name,r2))
+        print ("%s mean_squared_error: %0.3f" % (name, mse))
+        print ("%s mean_absolute_error: %0.3f" % (name, meanae))
+        print ("%s median_absolute_error: %0.3f" % (name, medianae))    
+    
+if (Algorithms_compare):
+
+	## Plot and Save
+	fig_results = plt.figure()
+	fig_results.suptitle('Algorithm Comparison on Training Data (K-fold=5)', fontsize=14, fontweight='bold')
+	ax = fig_results.add_subplot(111)
+	plt.ylabel('R2 score')
+	plt.boxplot(train_val_results)
+	ax.set_xticklabels(names)
+	fig_results.savefig('img/train_results.png')
 
 
-# Plot and Save
-fig_test_results = plt.figure()
-fig_test_results.suptitle('Algorithm Comparison on Testing Data')
-ax = fig_test_results.add_subplot(111)
-plt.plot(test_results, 'ro')
-plt.ylabel('R2 score')
-ax.set_xticklabels(['']+names)
-fig_test_results.savefig('img/test_results.png')
+	plt.rcParams['figure.figsize'] = (15, 15)
+
+	# Plot and Save
+	fig_test_results = plt.figure()
+	fig_test_results.suptitle('Algorithm Comparison on Testing Data', fontsize=14, fontweight='bold')
+	ax1 = fig_test_results.add_subplot(221)
+	plt.title('R2 VS Different Methdos')
+	plt.plot(test_results_r2, 'ro')
+	plt.ylabel('R2 score')
+	ax1.set_xticklabels(names)
+
+	ax2 = fig_test_results.add_subplot(222)
+	plt.title('Mean Squared Error VS Different Methdos')
+	plt.plot(test_results_mse, 'ro')
+	plt.ylabel('Mean Squared Error')
+	ax2.set_xticklabels(names)
+
+	ax3 = fig_test_results.add_subplot(223)
+	plt.title('Mean Absolute Error VS Different Methdos')
+	plt.plot(test_results_meanae, 'ro')
+	plt.ylabel('Mean Absolute Error')
+	ax3.set_xticklabels(names)
+
+	ax4 = fig_test_results.add_subplot(224)
+	plt.title('Median Absolute Error VS Different Methdos')
+	plt.plot(test_results_medianae, 'ro')
+	plt.ylabel('Median Absolute Error')
+	ax4.set_xticklabels(names)
+	fig_test_results.savefig('img/test_results.png')
 
 
 
 ####################################### ElasticNet Regularization and Optimization ############################
 
-#ELN_alphas=[0.0001, 0.0005, 0.001, 0.01, 0.1, 1, 10]
-#ELN_l1_ratio=[0.001, .01, .1, .5, 0.7, .9, .99]
-#
-#ELN_result_alphas=[]
-#ELN_results_l1_ratio=[]
-#for a in ELN_alphas:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_a = model_selection.cross_val_score(ElasticNet(alpha=a), X_train, Y_train, cv=kfold, scoring=scoring)
-#    ELN_result_alphas.append(cv_results_a.mean())
-#    msg = "%s: %f (%f)" % (name, cv_results_a.mean(), cv_results_a.std())
-#    #print(msg)
-#    
-#for b in ELN_l1_ratio:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_b = model_selection.cross_val_score(ElasticNet(l1_ratio=b), X_train, Y_train, cv=kfold, scoring=scoring) 
-#    ELN_results_l1_ratio.append(cv_results_b.mean())
-#    msg = "%s: %f (%f)" % (name, cv_results_b.mean(), cv_results_b.std())
-#    #print(msg)
-#    
-#fig1 = plt.figure()
-#ax1 = plt.gca()
-#ax1.plot(ELN_alphas, ELN_result_alphas,'o-', color="r", label="Accuracy against Alphas")
-#ax1.legend(loc="best")
-#ax1.set_xscale('log')
-#plt.xlabel('ELN_alphas')
-#plt.ylabel('Accuracy')
-#plt.title('ElasticNet Accuracy VS alphas')
-#plt.axis('tight')
-#fig1.savefig('img/ELN_ELN_alphas.png')
-#
-#fig2 = plt.figure()
-#ax2 = plt.gca()
-#ax2.plot(ELN_l1_ratio, ELN_results_l1_ratio,'o-', color="b", label="Accuracy against L1_ratio")
-#ax2.legend(loc="best")
-#ax2.set_xscale('log')
-#plt.xlabel('ELN_alphas')
-#plt.ylabel('Accuracy')
-#plt.title('ElasticNet Accuracy VS L1_ratio')
-#plt.axis('tight')
-#fig2.savefig('img/ELN_l1_ratio.png')
+
+if (ELN_detail):
+    
+	ELN_alphas=[0.0001, 0.0005, 0.001, 0.01, 0.1, 1, 10]
+	ELN_l1_ratio=[0.001, .01, .1, .5, 0.7, .9, .99]
+
+	ELN_result_alphas=[]
+	ELN_results_l1_ratio=[]
+	for a in ELN_alphas:
+	    kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	    cv_results_a = model_selection.cross_val_score(ElasticNet(alpha=a), X_train, Y_train, cv=kfold, scoring=scoring)
+	    ELN_result_alphas.append(cv_results_a.mean())
+	    msg = "%s: %f (%f)" % (name, cv_results_a.mean(), cv_results_a.std())
+	    #print(msg)
+	    
+	for b in ELN_l1_ratio:
+	    kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	    cv_results_b = model_selection.cross_val_score(ElasticNet(l1_ratio=b), X_train, Y_train, cv=kfold, scoring=scoring) 
+	    ELN_results_l1_ratio.append(cv_results_b.mean())
+	    msg = "%s: %f (%f)" % (name, cv_results_b.mean(), cv_results_b.std())
+	    #print(msg)
+	    
+	fig1 = plt.figure()
+	ax1 = plt.gca()
+	ax1.plot(ELN_alphas, ELN_result_alphas,'o-', color="r", label="R2 Score against Alphas")
+	ax1.legend(loc="best")
+	ax1.set_xscale('log')
+	plt.xlabel('ELN_alphas')
+	plt.ylabel('R2 Score')
+	plt.title('ElasticNet R2 Score VS alphas', fontsize=14, fontweight='bold')
+	plt.axis('tight')
+	fig1.savefig('img/ELN_ELN_alphas.png')
+
+	fig2 = plt.figure()
+	ax2 = plt.gca()
+	ax2.plot(ELN_l1_ratio, ELN_results_l1_ratio,'o-', color="b", label="R2 Score against L1_ratio")
+	ax2.legend(loc="best")
+	ax2.set_xscale('log')
+	plt.xlabel('ELN_alphas')
+	plt.ylabel('R2 Score')
+	plt.title('ElasticNet R2 Score VS L1_ratio', fontsize=14, fontweight='bold')
+	plt.axis('tight')
+	fig2.savefig('img/ELN_l1_ratio.png')
 
 
 
 ####################################### KNN Regressor Regularization and Optimization ############################
-#neighbor=[1,2,3,4,5,6,7,8,9,10,15,20,25]
-#p_value=[1,2]
-#
-#
-#KNN_result_neighbor=[]
-#KNN_results_p=[]
-#for a in neighbor:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_a = model_selection.cross_val_score(KNeighborsRegressor(n_neighbors=a, weights='uniform',p=1), X_train, Y_train, cv=kfold, scoring=scoring)
-#    KNN_result_neighbor.append(cv_results_a.mean())
-#    msg = "%s %f: %f (%f)" % ("KNN", a, cv_results_a.mean(), cv_results_a.std())
-#    #print(msg)
-#    
-#for b in p_value:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_b = model_selection.cross_val_score(KNeighborsRegressor(p=b), X_train, Y_train, cv=kfold, scoring=scoring) 
-#    KNN_results_p.append(cv_results_b.mean())
-#    msg = "%s %f: %f (%f)" % ("KNN", b, cv_results_b.mean(), cv_results_b.std())
-#    #print(msg)
-#    
-#    
-#fig3 = plt.figure()
-#ax3 = plt.gca()
-#ax3.plot(neighbor, KNN_result_neighbor,'o-', color="r", label="Accuracy against neighbor number")
-#ax3.legend(loc="best")
-#plt.xlabel('neighbor')
-#plt.ylabel('Accuracy')
-#plt.title('KNN Regressor Accuracy VS neighbor')
-#plt.axis('tight')
-#fig3.savefig('img/KNN_neighbor.png')
-#
-#fig4 = plt.figure()
-#ax4 = plt.gca()
-#ax4.plot(p_value, KNN_results_p,'o-', color="b", label="Accuracy against Power parameter for the Minkowski metric")
-#ax4.legend(loc="best")
-#plt.xlabel('p')
-#plt.ylabel('Accuracy')
-#plt.title('KNN Accuracy VS manhattan_distance, and euclidean_distance')
-#plt.axis('tight')
-#fig4.savefig('img/KNN_p_value.png')
+if (KNN_detail):
+	neighbor=[1,2,3,4,5,6,7,8,9,10,15,20,25]
+	p_value=[1,2]
+
+
+	KNN_result_neighbor=[]
+	KNN_results_p=[]
+	for a in neighbor:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_a = model_selection.cross_val_score(KNeighborsRegressor(n_neighbors=a, weights='uniform',p=1), X_train, Y_train, cv=kfold, scoring=scoring)
+	   KNN_result_neighbor.append(cv_results_a.mean())
+	   msg = "%s %f: %f (%f)" % ("KNN", a, cv_results_a.mean(), cv_results_a.std())
+	   #print(msg)
+	   
+	for b in p_value:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_b = model_selection.cross_val_score(KNeighborsRegressor(p=b), X_train, Y_train, cv=kfold, scoring=scoring) 
+	   KNN_results_p.append(cv_results_b.mean())
+	   msg = "%s %f: %f (%f)" % ("KNN", b, cv_results_b.mean(), cv_results_b.std())
+	   #print(msg)
+	   
+	plt.rcParams['figure.figsize'] = (20, 10)	   
+	fig3 = plt.figure()
+	fig3.suptitle('KNN Parameter Optimization (K-fold=5)', fontsize=14, fontweight='bold')
+	ax3 = fig3.add_subplot(121)
+	ax3.plot(neighbor, KNN_result_neighbor,'o-', color="r")
+	ax3.legend(loc="best")
+	plt.xlabel('neighbor')
+	plt.ylabel('R2 Score')
+	plt.title('KNN Regressor R2 Score VS neighbor')
+	plt.axis('tight')
+
+	ax4 = fig3.add_subplot(122)
+	ax4.plot(KNN_results_p,'ro', color="b")
+	ax4.legend(loc="best")
+	ax4.set_xticklabels(['manhattan_distance','','','','','euclidean_distance'])
+	plt.xlabel('Distance Metrics')
+	plt.ylabel('R2 Score')
+	plt.title('KNN R2 Score VS manhattan_distance, and euclidean_distance')
+	plt.axis('tight')
+	fig3.savefig('img/KNN.png')
 
 ####################################### Random Forest Regressor Regularization and Optimization ############################
 
-#n_estimators=[1,2,3,4,5,6,7,10, 15,20,25,30,40,40,60]
-#max_depth=[3,5,7,9,10,11,15,20]
-#min_samples_split=[3,4,5,6,10,15,20]
-#min_samples_leaf=[1,2,3,4,5,10,15,20]
-#
-#
-#
-#RF_result_estimator=[]
-#RF_result_max_depth=[]
-#RF_result_min_samples_split=[]
-#RF_result_min_samples_leaf=[]
-#
-#for a in n_estimators:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_a = model_selection.cross_val_score(RandomForestRegressor(n_estimators=a), X_train, Y_train, cv=kfold, scoring=scoring)
-#    RF_result_estimator.append(cv_results_a.mean())
-#    msg = "%s %f: %f (%f)" % ("Random Forest", a, cv_results_a.mean(), cv_results_a.std())
-#    #print(msg)
-#    
-#for b in max_depth:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_b = model_selection.cross_val_score(RandomForestRegressor(max_depth=b), X_train, Y_train, cv=kfold, scoring=scoring) 
-#    RF_result_max_depth.append(cv_results_b.mean())
-#    msg = "%s %f: %f (%f)" % ("Random Forest", b, cv_results_b.mean(), cv_results_b.std())
-#    #print(msg)
-#    
-#for c in min_samples_split:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_c = model_selection.cross_val_score(RandomForestRegressor(min_samples_split=c), X_train, Y_train, cv=kfold, scoring=scoring)
-#    RF_result_min_samples_split.append(cv_results_c.mean())
-#    msg = "%s %f: %f (%f)" % ("Random Forest", c, cv_results_c.mean(), cv_results_c.std())
-#    #print(msg)
-#    
-#for d in min_samples_leaf:
-#    kfold = model_selection.KFold(n_splits=5, random_state=seed)
-#    cv_results_d = model_selection.cross_val_score(RandomForestRegressor(min_samples_leaf=d), X_train, Y_train, cv=kfold, scoring=scoring) 
-#    RF_result_min_samples_leaf.append(cv_results_d.mean())
-#    msg = "%s %f: %f (%f)" % ("Random Forest", d, cv_results_d.mean(), cv_results_d.std())
-#    #print(msg)
-#    
-#    
-#    
-#fig5 = plt.figure()
-#ax5 = plt.subplot(111)
-#ax5.plot(n_estimators, RF_result_estimator,'o-', color="r", label="Accuracy against n_estimators")
-#ax5.legend(loc="best")
-#plt.xlabel('n_estimators')
-#plt.ylabel('Accuracy')
-#plt.title('RF Accuracy VS n_estimators')
-#plt.axis('tight')
-#fig5.savefig('img/RF_n_estimators.png')
-#
-#fig6 = plt.figure()
-#ax6 = plt.subplot(111)
-#ax6.plot(max_depth, RF_result_max_depth,'o-', color="b", label="Accuracy against max_depth")
-#ax6.legend(loc="best")
-#plt.xlabel('max_depth')
-#plt.ylabel('Accuracy')
-#plt.title('RF Accuracy VS max_depth')
-#plt.axis('tight')
-#fig6.savefig('img/RF_max_depth.png')
-#
-#
-#fig7 = plt.figure()
-#ax7 = plt.subplot(111)
-#ax7.plot(min_samples_split, RF_result_min_samples_split,'o-', color="r", label="Accuracy against min_samples_split")
-#ax7.legend(loc="best")
-#plt.xlabel('min_samples_split')
-#plt.ylabel('Accuracy')
-#plt.title('RF Accuracy VS min_samples_split')
-#plt.axis('tight')
-#fig7.savefig('img/RF_min_samples_split.png')
-#
-#
-#fig8= plt.figure()
-#ax8= plt.subplot(111)
-#ax8.plot(min_samples_leaf, RF_result_min_samples_leaf,'o-', color="b", label="Accuracy against min_samples_leaf")
-#ax8.legend(loc="best")
-#plt.xlabel('min_samples_leaf')
-#plt.ylabel('Accuracy')
-#plt.title('RF VS min_samples_leaf')
-#plt.axis('tight')
-#fig8.savefig('img/RF_min_samples_leaf.png')
+if (RF_detail):
 
+	n_estimators=[1,2,3,4,5,6,7,10,15,20,25,30,40,40,60]
+	max_depth=[3,5,7,9,10,11,15,20]
+	min_samples_split=[3,4,5,6,10,15,20]
+	min_samples_leaf=[1,2,3,4,5,10,15,20]
 
+	RF_result_estimator=[]
+	RF_result_max_depth=[]
+	RF_result_min_samples_split=[]
+	RF_result_min_samples_leaf=[]
 
+	for a in n_estimators:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_a = model_selection.cross_val_score(RandomForestRegressor(n_estimators=a), X_train, Y_train, cv=kfold, scoring=scoring)
+	   RF_result_estimator.append(cv_results_a.mean())
+	   msg = "%s %f: %f (%f)" % ("Random Forest", a, cv_results_a.mean(), cv_results_a.std())
+	   #print(msg)
+	   
+	for b in max_depth:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_b = model_selection.cross_val_score(RandomForestRegressor(max_depth=b), X_train, Y_train, cv=kfold, scoring=scoring) 
+	   RF_result_max_depth.append(cv_results_b.mean())
+	   msg = "%s %f: %f (%f)" % ("Random Forest", b, cv_results_b.mean(), cv_results_b.std())
+	   #print(msg)
+	   
+	for c in min_samples_split:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_c = model_selection.cross_val_score(RandomForestRegressor(min_samples_split=c), X_train, Y_train, cv=kfold, scoring=scoring)
+	   RF_result_min_samples_split.append(cv_results_c.mean())
+	   msg = "%s %f: %f (%f)" % ("Random Forest", c, cv_results_c.mean(), cv_results_c.std())
+	   #print(msg)
+	   
+	for d in min_samples_leaf:
+	   kfold = model_selection.KFold(n_splits=5, random_state=seed)
+	   cv_results_d = model_selection.cross_val_score(RandomForestRegressor(min_samples_leaf=d), X_train, Y_train, cv=kfold, scoring=scoring) 
+	   RF_result_min_samples_leaf.append(cv_results_d.mean())
+	   msg = "%s %f: %f (%f)" % ("Random Forest", d, cv_results_d.mean(), cv_results_d.std())
+	   #print(msg)
+	   
+	   
+	plt.rcParams['figure.figsize'] = (15, 15)	
 
+	fig5 = plt.figure()
+	fig5.suptitle('RF Parameter Optimization (K-fold=5)', fontsize=14, fontweight='bold')
+	ax5 = plt.subplot(221)
+	ax5.plot(n_estimators, RF_result_estimator,'o-', color="r", label="Accuracy against n_estimators")
+	ax5.legend(loc="best")
+	plt.xlabel('n_estimators')
+	plt.ylabel('R2 Score ')
+	plt.title('RF R2 Score VS n_estimators')
+	plt.axis('tight')
 
+	ax6 = plt.subplot(222)
+	ax6.plot(max_depth, RF_result_max_depth,'o-', color="b", label="Accuracy against max_depth")
+	ax6.legend(loc="best")
+	plt.xlabel('max_depth')
+	plt.ylabel('R2 Score ')
+	plt.title('RF R2 Score VS max_depth')
+	plt.axis('tight')
 
+	ax7 = plt.subplot(223)
+	ax7.plot(min_samples_split, RF_result_min_samples_split,'o-', color="r", label="Accuracy against min_samples_split")
+	ax7.legend(loc="best")
+	plt.xlabel('min_samples_split')
+	plt.ylabel('R2 Score')
+	plt.title('RF R2 Score VS min_samples_split')
+	plt.axis('tight')
 
+	ax8= plt.subplot(224)
+	ax8.plot(min_samples_leaf, RF_result_min_samples_leaf,'o-', color="b", label="Accuracy against min_samples_leaf")
+	ax8.legend(loc="best")
+	plt.xlabel('min_samples_leaf')
+	plt.ylabel('R2 Score')
+	plt.title('RF R2 Score VS min_samples_leaf')
+	plt.axis('tight')
+	fig5.savefig('img/RF.png')
 
 
 # train the model
-model = Ridge()
-model.fit(X_train, Y_train)
+#model = Ridge()
+#model.fit(X_train, Y_train)
 
 #We now have a fit model, pass in our test data to the fitted model to make predictions with it.
-predictions = model.predict(X_validation)
+#predictions = model.predict(X_validation)
 
 ##calculate the error
 #from sklearn.metrics import r2_score

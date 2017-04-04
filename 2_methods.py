@@ -26,11 +26,11 @@ from sklearn.linear_model import Ridge
 from sklearn.linear_model import ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.svm import SVR
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestRegressor
 # Split-out validation dataset
 from sklearn import model_selection
+import sklearn.metrics as metrics
 
 ###################################################################################
 ## Uncomment below to debug the version 
@@ -41,14 +41,30 @@ from sklearn import model_selection
 #print('sklearn: {}'.format(sklearn.__version__))
 
 ###################################################################################
-#Read the train dataset
 
-dataset = pd.read_csv("dataset/good.csv")
-Y = dataset.iloc[:,-1]
-dataset = dataset.drop(['SalePrice'], axis=1)
-validation_size = 0.20 # ratio between training and validation 
+
+PCA_allowed=0
+
+#Read the train dataset
+## Use the data from PCA
+if PCA_allowed:
+    dataset = pd.read_csv("dataset/good_PCA36.csv")
+    temp=pd.read_csv("dataset/good_noPCA.csv")
+    Y = temp.iloc[:,-1]
+
+## Do not use the data from PCA
+else: 
+    dataset = pd.read_csv("dataset/good_noPCA.csv")
+    Y = dataset.iloc[:,-1]
+    dataset = dataset.drop(['SalePrice'], axis=1)
+
+
+validation_size = 0.15 # ratio between training and validation 
 seed = 5
-X_train, X_validation, Y_train, Y_validation = model_selection.train_test_split(dataset, Y, test_size=validation_size, random_state=seed)
+
+## X_train Y_train are for K cross-validation
+## X_test Y_test are for examining if overfit
+X_train, X_test, Y_train, Y_test = model_selection.train_test_split(dataset, Y, test_size=validation_size, random_state=seed)
 
 ##############################      Compare Different Algorithms    ###########################################
 models = []
@@ -57,29 +73,49 @@ models.append(('RIDGE', Ridge()))
 models.append(('LASSO', Lasso()))
 models.append(('ELN', ElasticNet(alpha=0.0005,l1_ratio=0.001)))
 models.append(('KNN', KNeighborsRegressor(n_neighbors=6, weights='uniform',p=1)))
-models.append(('SVM', SVR()))
 models.append(('RF', RandomForestRegressor(n_estimators=100, max_depth=20, min_samples_split=6, min_samples_leaf=2)))
 scoring = 'r2'
 
 
 # evaluate each model in turn
-results = []
+train_val_results = []
+test_results= []
+
 names = []
 for name, model in models:
+    ## Perform Cross-Validation on X_train, Y_train
     kfold = model_selection.KFold(n_splits=5, random_state=seed)
     cv_results = model_selection.cross_val_score(model, X_train, Y_train,  cv=kfold, scoring=scoring)
-    results.append(cv_results)
+    train_val_results.append(cv_results)
     names.append(name)
-    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
-    print(msg)
+    print("%s R2 score: %0.2f (+/- %0.2f)" % (name, cv_results.mean(), cv_results.std() * 2))
+    
+    ## Use X_test, Y_test to see if overfitting
+    clf = model.fit(X_train, Y_train)
+    prediction=clf.predict(X_test)
+    test_result=metrics.r2_score(Y_test, prediction)
+    #test_result=clf.score(X_test, Y_test) 
+    test_results.append(test_result)
+    print("%s R2 score: %0.2f" % (name, test_result))
     
 # Plot and Save
 fig_results = plt.figure()
-fig_results.suptitle('Algorithm Comparison')
+fig_results.suptitle('Algorithm Comparison on Training Data (K-fold=5)')
 ax = fig_results.add_subplot(111)
-plt.boxplot(results)
+plt.ylabel('R2 score')
+plt.boxplot(train_val_results)
 ax.set_xticklabels(names)
-fig_results.savefig('img/results.png')
+fig_results.savefig('img/train_results.png')
+
+
+# Plot and Save
+fig_test_results = plt.figure()
+fig_test_results.suptitle('Algorithm Comparison on Testing Data')
+ax = fig_test_results.add_subplot(111)
+plt.plot(test_results, 'ro')
+plt.ylabel('R2 score')
+ax.set_xticklabels(['']+names)
+fig_test_results.savefig('img/test_results.png')
 
 
 

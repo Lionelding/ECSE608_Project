@@ -7,35 +7,47 @@ from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import tflearn
 import tensorflow as tf
+import sklearn.metrics as metrics
 
 #############################    Load Data      ###############################ß
-data = pd.read_csv('dataset/good_noPCA.csv')
-labels=data["SalePrice"]
-#test = pd.read_csv('dataset/test.csv')
-data = data.drop("SalePrice", 1)
-PCA_num=50
+
+PCA_allowed=1
+
+#Read the train dataset
+## Use the data from PCA
+if PCA_allowed:
+    dataset = pd.read_csv("dataset/good_PCA36.csv")
+    temp=pd.read_csv("dataset/good_noPCA.csv")
+    labels = temp.iloc[:,-1]
+
+## Do not use the data from PCA
+else: 
+    dataset = pd.read_csv("dataset/good_noPCA.csv")
+    labels = dataset.iloc[:,-1]
+    dataset = dataset.drop(['SalePrice'], axis=1)
+
 
 
 ## Fill data with missing value
 imp = Imputer(missing_values='NaN', strategy='most_frequent', axis=0)
-data = imp.fit_transform(data)
+dataset = imp.fit_transform(dataset)
     
-## Perform PCA 
-pca = PCA(whiten=True)
-pca.fit(data)
-variance = pd.DataFrame(pca.explained_variance_ratio_)
-np.cumsum(pca.explained_variance_ratio_)
-
-
-pca = PCA(n_components=PCA_num,whiten=True)
-pca = pca.fit(data)
-dataPCA = pca.transform(data)
+### Perform PCA 
+#pca = PCA(whiten=True)
+#pca.fit(data)
+#variance = pd.DataFrame(pca.explained_variance_ratio_)
+#np.cumsum(pca.explained_variance_ratio_)
+#
+#
+#pca = PCA(n_components=PCA_num,whiten=True)
+#pca = pca.fit(data)
+#dataPCA = pca.transform(data)
 
 
 
 ############################  Neural Network ##################################
 # Split traing and test
-train = dataPCA
+train = dataset
 
 print(np.shape(train))
 
@@ -55,16 +67,14 @@ net = tflearn.regression(net, optimizer=sgd,loss='mean_square',metric=r2)
 model = tflearn.DNN(net)
 
 
-model.fit(train, labels_nl,show_metric=True,validation_set=0.2,shuffle=True,n_epoch=50)
+model.fit(train, labels_nl,show_metric=True,validation_set=0.2,shuffle=True,n_epoch=5)
 
 predictions_DNN = model.predict(train)
-predictions_DNN = np.exp(predictions_DNN)
-predictions_DNN = predictions_DNN.reshape(-1,)
+#predictions_DNN = np.exp(predictions_DNN)
+#predictions_DNN = predictions_DNN.reshape(-1,)
 
-
+print ("r2_score: %0.3f" % (metrics.r2_score(labels_nl, predictions_DNN)))
+print ("mean_squared_error: %0.3f" % (metrics.mean_squared_error(labels_nl, predictions_DNN)))
+print ("mean_absolute_error: %0.3f" % (metrics.mean_absolute_error(labels_nl, predictions_DNN)))
+print ("median_absolute_error: %0.3f" % (metrics.median_absolute_error(labels_nl, predictions_DNN)))
 #######################  Measure Error   ######################################
-
-#error=0
-#for i in range(0,len(predictions_DNN)):
-#    single_error=abs(predictions_DNN[i]-np.exp(labels[i]))
-#    error=single_error+error

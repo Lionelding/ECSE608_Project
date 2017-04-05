@@ -338,13 +338,8 @@ if (RF_detail):
 	fig5.savefig('img/RF.png')
 
 
-# train the model
-#model = Ridge()
-#model.fit(X_train, Y_train)
-
-#We now have a fit model, pass in our test data to the fitted model to make predictions with it.
-#predictions = model.predict(X_validation)
-
-##calculate the error
-#from sklearn.metrics import r2_score
-#r2_score(Y_validation,predictions)
+#####
+r2_score: 0.898
+mean_squared_error: 0.016
+mean_absolute_error: 0.089
+median_absolute_error: 0.063

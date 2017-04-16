@@ -2,31 +2,19 @@
 import pandas as pd
 import numpy as np
 
-from subprocess import check_output
-import sys
-import scipy
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 import warnings
 warnings.filterwarnings('ignore')
 from IPython import get_ipython
 get_ipython().run_line_magic('matplotlib', 'inline')
 
-import sklearn
-from sklearn import ensemble, tree, linear_model
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.utils import shuffle
 
-from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestRegressor
 # Split-out validation dataset
 from sklearn import model_selection
@@ -90,6 +78,8 @@ test_results_mse=[]
 test_results_meanae=[]
 test_results_medianae=[]
 
+
+
 names = []
 for name, model in models:
     ## Perform Cross-Validation on X_train, Y_train
@@ -121,7 +111,24 @@ for name, model in models:
         print ("%s mean_squared_error: %0.3f" % (name, mse))
         print ("%s mean_absolute_error: %0.3f" % (name, meanae))
         print ("%s median_absolute_error: %0.3f" % (name, medianae))    
-    
+        
+        
+############ Add Neraul Network results from 3_NeuralNetwork.py to plot #######
+        
+#r2_score: 0.898
+#mean_squared_error: 0.016
+#mean_absolute_error: 0.089
+#median_absolute_error: 0.063
+        
+names.append('NN')
+test_results_r2.append(0.898)
+test_results_mse.append(0.016)
+test_results_meanae.append(0.089)
+test_results_medianae.append(0.063)
+
+        
+########################## Save and Plot ######################################
+        
 if (Algorithms_compare):
 
 	## Plot and Save
@@ -140,25 +147,25 @@ if (Algorithms_compare):
 	fig_test_results = plt.figure()
 	fig_test_results.suptitle('Algorithm Comparison on Testing Data', fontsize=14, fontweight='bold')
 	ax1 = fig_test_results.add_subplot(221)
-	plt.title('R2 VS Different Methdos')
+	plt.title('R2 VS Different Methods')
 	plt.plot(test_results_r2, 'ro')
 	plt.ylabel('R2 score')
 	ax1.set_xticklabels(names)
 
 	ax2 = fig_test_results.add_subplot(222)
-	plt.title('Mean Squared Error VS Different Methdos')
+	plt.title('Mean Squared Error VS Different Methods')
 	plt.plot(test_results_mse, 'ro')
 	plt.ylabel('Mean Squared Error')
 	ax2.set_xticklabels(names)
 
 	ax3 = fig_test_results.add_subplot(223)
-	plt.title('Mean Absolute Error VS Different Methdos')
+	plt.title('Mean Absolute Error VS Different Methods')
 	plt.plot(test_results_meanae, 'ro')
 	plt.ylabel('Mean Absolute Error')
 	ax3.set_xticklabels(names)
 
 	ax4 = fig_test_results.add_subplot(224)
-	plt.title('Median Absolute Error VS Different Methdos')
+	plt.title('Median Absolute Error VS Different Methods')
 	plt.plot(test_results_medianae, 'ro')
 	plt.ylabel('Median Absolute Error')
 	ax4.set_xticklabels(names)
@@ -248,7 +255,7 @@ if (KNN_detail):
 	plt.axis('tight')
 
 	ax4 = fig3.add_subplot(122)
-	ax4.plot(KNN_results_p,'ro', color="b")
+	ax4.plot(KNN_results_p,'ro',color="b")
 	ax4.legend(loc="best")
 	ax4.set_xticklabels(['manhattan_distance','','','','','euclidean_distance'])
 	plt.xlabel('Distance Metrics')
@@ -339,7 +346,4 @@ if (RF_detail):
 
 
 #####
-r2_score: 0.898
-mean_squared_error: 0.016
-mean_absolute_error: 0.089
-median_absolute_error: 0.063
+
